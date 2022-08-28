@@ -17,6 +17,11 @@ ByteStream::ByteStream(const size_t capacity) :
     _input_ended(false){}
 
 size_t ByteStream::write(const string &data) {
+    if (this->eof()){
+        this->set_error();
+        return 0;
+    }
+
     Buffer buffer;
     if (data.size() + this->buffer_size() > this->_capacity){
         buffer = Buffer(data.substr(0, this->_capacity - this->buffer_size()));
