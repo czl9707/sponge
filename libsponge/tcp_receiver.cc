@@ -5,15 +5,39 @@
 // For Lab 2, please replace with a real implementation that passes the
 // automated checks run by `make check_lab2`.
 
-template <typename... Targs>
-void DUMMY_CODE(Targs &&... /* unused */) {}
-
 using namespace std;
 
 void TCPReceiver::segment_received(const TCPSegment &seg) {
-    DUMMY_CODE(seg);
+    bool syn = seg.header().syn;
+    bool fin = seg.header().fin;
+    auto seqno = seg.header().seqno;
+    string payload = seg.payload().copy();
+
+    if (syn && !this->_ISN.has_value()){
+        this->_ISN = optional<WrappingInt32>(seg.header().seqno);
+        cout << "BEGIN" << endl;
+
+        seqno = WrappingInt32(seqno.raw_value() + 1);
+    }
+
+    if (!this->_ISN.has_value()) return;
+    
+    bool eof = false;
+    if (fin){
+        eof = true;
+    }
+
+    uint64_t index = unwrap(seqno, this->_ISN.value(), this->written_bytes()) - 1;
+
+    this->_reassembler.push_substring(payload, index, eof);
+    cout << payload << " " << index  << " " << this->stream_out().eof() << endl;
 }
 
-optional<WrappingInt32> TCPReceiver::ackno() const { return {}; }
+optional<WrappingInt32> TCPReceiver::ackno() const {
+    if (!this->_ISN.has_value()) return nullopt;
+    
+    auto acknumber = wrap(this->written_bytes() + 1 + this->stream_out().input_ended()
+                            , this->_ISN.value());
 
-size_t TCPReceiver::window_size() const { return {}; }
+    return optional<WrappingInt32>(WrappingInt32(acknumber));
+}

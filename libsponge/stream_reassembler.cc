@@ -25,7 +25,7 @@ void StreamReassembler::push_substring(const std::string &data, const uint64_t i
     uint64_t start = index;
     bool is_tail_trimmed = this->trim(buffer, start);
     
-    if (eof == true && !is_tail_trimmed){
+    if (eof && !is_tail_trimmed){
         this->_eof = true;
     }
 
@@ -36,14 +36,6 @@ void StreamReassembler::push_substring(const std::string &data, const uint64_t i
 
     this->flush();
     this->merge();
-}
-
-size_t StreamReassembler::unassembled_bytes() const {
-    return this->_unassembled + this->stream_out().buffer_size();
-}
-
-bool StreamReassembler::empty() const {
-    return this->_unassembled == 0;
 }
 
 bool StreamReassembler::trim(BufferList &buffer, uint64_t &start) {
@@ -133,13 +125,13 @@ void StreamReassembler::flush() {
         string s = this->_pending[_firstUnassembled].concatenate();
         uint64_t n = this->_pending[_firstUnassembled].size();
 
-        stream_out().write(s);
+        this->_output.write(s);
         this->_pending.erase(_firstUnassembled);
         this->_unassembled -= n;
         this->_firstUnassembled += n;
     }
 
     if (this->_eof && this->_unassembled == 0){
-        stream_out().end_input();
+        this->_output.end_input();
     }
 }

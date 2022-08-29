@@ -4,6 +4,7 @@
 #include "byte_stream.hh"
 #include "stream_reassembler.hh"
 #include "tcp_segment.hh"
+#include "tcp_header.hh"
 #include "wrapping_integers.hh"
 
 #include <optional>
@@ -19,13 +20,17 @@ class TCPReceiver {
 
     //! The maximum number of bytes we'll store.
     size_t _capacity;
+    optional<WrappingInt32> _ISN;
 
   public:
     //! \brief Construct a TCP receiver
     //!
     //! \param capacity the maximum number of bytes that the receiver will
     //!                 store in its buffers at any give time.
-    TCPReceiver(const size_t capacity) : _reassembler(capacity), _capacity(capacity) {}
+    TCPReceiver(const size_t capacity) : 
+      _reassembler(capacity),
+      _capacity(capacity),
+      _ISN(nullopt){};
 
     //! \name Accessors to provide feedback to the remote TCPSender
     //!@{
@@ -47,7 +52,7 @@ class TCPReceiver {
     //! the first byte that falls after the window (and will not be
     //! accepted by the receiver) and (b) the sequence number of the
     //! beginning of the window (the ackno).
-    size_t window_size() const;
+    size_t window_size() const {return this->_capacity - this->_reassembler.unread_bytes(); }
     //!@}
 
     //! \brief number of bytes stored but not yet reassembled
@@ -61,6 +66,10 @@ class TCPReceiver {
     ByteStream &stream_out() { return _reassembler.stream_out(); }
     const ByteStream &stream_out() const { return _reassembler.stream_out(); }
     //!@}
+
+    private:
+    size_t written_bytes() const { return this->_reassembler.written_bytes(); }
+
 };
 
 #endif  // SPONGE_LIBSPONGE_TCP_RECEIVER_HH

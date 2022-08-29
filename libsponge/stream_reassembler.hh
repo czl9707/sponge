@@ -23,9 +23,13 @@ class StreamReassembler {
     bool _eof;
     map<uint64_t, BufferList> _pending; //!< Received bytes but not continuous.
 
+    //! \brief trim the buffer into a shape have no overflow on both side, have no overlap with exist buffer.
     bool trim(BufferList &buffer, uint64_t &start); 
 
+    //! \brief merge existing continouos buffer
     void merge();
+
+    //! \brief push all buffer right after reassembled bytes in byte stream.
     void flush();
 
   public:
@@ -54,11 +58,17 @@ class StreamReassembler {
     //!
     //! \note If the byte at a particular index has been pushed more than once, it
     //! should only be counted once for the purpose of this function.
-    size_t unassembled_bytes() const;
+    size_t unassembled_bytes() const {return this->_unassembled;}
+
+    //! \brief The number of reassembled bytes in the ByteStream but not read yet.
+    size_t unread_bytes() const { return this->_output.buffer_size(); }
+
+    //! \brief The number of reassembled bytes in the ByteStream in total.
+    size_t written_bytes() const { return this->_output.bytes_written(); }
 
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
-    bool empty() const;
+    bool empty() const { return this->_unassembled == 0; }
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
