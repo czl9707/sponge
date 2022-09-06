@@ -9,6 +9,32 @@
 #include <functional>
 #include <queue>
 
+// the internal class of TCPsender, doing the job of resend seg after timeout.
+class RetransTimer {
+  private:
+  unsigned int _initial_retransmission_timeout;
+  
+  uint16_t _retransCounter{0};
+  
+  uint64_t _tick_accum{0};
+
+  std::queue<TCPSegment> _waiting_segs{std::queue<TCPSegment>()};
+
+  public:
+  
+  RetransTimer(const unsigned int retx_timeout);
+
+  void push(TCPSegment &seg);
+
+  void timerTick(std::queue<TCPSegment> &segments_out, size_t ms_since_last_tick);
+
+  void prone(std::queue<TCPSegment> &segments_out, size_t ms_since_last_tick);
+
+  void reset(uint64_t ackno, const WrappingInt32 &isn);
+
+  unsigned int consecutive_retransmissions() const { return this->_retransCounter; }
+};
+
 //! \brief The "sender" part of a TCP implementation.
 
 //! Accepts a ByteStream, divides it up into segments and sends the
@@ -29,8 +55,26 @@ class TCPSender {
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
 
+    //! the (absolute) sequence number for the first byte cannot be sent
+    uint64_t _first_notaccept{0xffffffffffffffff};
+
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+
+    //! fin number
+    bool _finsent{false};
+
+    //! the (absolute) sequence number for the first byte has not been sent
+    uint64_t _first_unackno{0};
+
+    //! size of one package
+    const uint64_t _pkg_size{1452};
+
+    RetransTimer _timer;
+
+    void send_package(std::string &&payload, uint64_t &start);
+
+    void send_syn();
 
   public:
     //! Initialize a TCPSender
@@ -69,7 +113,7 @@ class TCPSender {
     size_t bytes_in_flight() const;
 
     //! \brief Number of consecutive retransmissions that have occurred in a row
-    unsigned int consecutive_retransmissions() const;
+    unsigned int consecutive_retransmissions() const { return this->_timer.consecutive_retransmissions(); };
 
     //! \brief TCPSegments that the TCPSender has enqueued for transmission.
     //! \note These must be dequeued and sent by the TCPConnection,
@@ -85,7 +129,7 @@ class TCPSender {
     uint64_t next_seqno_absolute() const { return _next_seqno; }
 
     //! \brief relative seqno for the next byte to be sent
-    WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
+    WrappingInt32 next_seqno() const { return wrap(this->_next_seqno, _isn); }
     //!@}
 };
 
