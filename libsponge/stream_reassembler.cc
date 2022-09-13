@@ -15,7 +15,7 @@ StreamReassembler::StreamReassembler(const size_t capacity) :
     _unassembled(0),
     _firstUnassembled(0),
     _eof(false),
-    _pending(map<uint64_t, BufferList>()) {}
+    _pending() {}
 
 //! \details This function accepts a substring (aka a segment) of bytes,
 //! possibly out-of-order, from the logical stream, and assembles any newly

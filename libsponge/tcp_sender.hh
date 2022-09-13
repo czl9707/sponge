@@ -68,13 +68,13 @@ class TCPSender {
     uint64_t _first_unackno{0};
 
     //! size of one package
-    const uint64_t _pkg_size{1452};
+    const uint64_t _pkg_size{TCPConfig::MAX_PAYLOAD_SIZE};
 
     RetransTimer _timer;
 
     void send_package(std::string &&payload, uint64_t &start);
 
-    void send_syn();
+    void _send_syn();
 
   public:
     //! Initialize a TCPSender

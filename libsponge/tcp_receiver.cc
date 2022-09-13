@@ -15,22 +15,15 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
 
     if (syn && !this->_ISN.has_value()){
         this->_ISN = optional<WrappingInt32>(seg.header().seqno);
-        cout << "BEGIN" << endl;
 
         seqno = WrappingInt32(seqno.raw_value() + 1);
     }
 
     if (!this->_ISN.has_value()) return;
-    
-    bool eof = false;
-    if (fin){
-        eof = true;
-    }
 
     uint64_t index = unwrap(seqno, this->_ISN.value(), this->written_bytes()) - 1;
 
-    this->_reassembler.push_substring(payload, index, eof);
-    cout << payload << " " << index  << " " << this->stream_out().eof() << endl;
+    this->_reassembler.push_substring(payload, index, fin);
 }
 
 optional<WrappingInt32> TCPReceiver::ackno() const {

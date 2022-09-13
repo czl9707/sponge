@@ -37,14 +37,18 @@ size_t ByteStream::write(const string &data) {
 
 //! \param[in] len bytes will be copied from the output side of the buffer
 string ByteStream::peek_output(const size_t len) const {
+    auto size = min<size_t>(len, this->_buffer.size());
+
     std::string s = this->_buffer.concatenate();
-    return s.substr(0, len);
+    return s.substr(0, size);
 }
 
 //! \param[in] len bytes will be removed from the output side of the buffer
 void ByteStream::pop_output(const size_t len) {
-    this->_buffer.remove_prefix(len);
-    this->_popped += len;
+    auto size = min<size_t>(len, this->_buffer.size());
+
+    this->_buffer.remove_prefix(size);
+    this->_popped += size;
 }
 
 //! Read (i.e., copy and then pop) the next "len" bytes of the stream
