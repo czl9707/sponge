@@ -18,13 +18,14 @@ class StreamReassembler {
 
     ByteStream _output;  //!< The reassembled in-order byte stream
     const size_t _capacity;    //!< The maximum number of bytes
-    size_t _unassembled;
-    uint64_t _firstUnassembled;
+    map<uint64_t, string> _pending; //!< Received bytes but not continuous.
+
+    uint64_t _unassembled;
+    uint64_t _first_unassembled;
     bool _eof;
-    map<uint64_t, BufferList> _pending; //!< Received bytes but not continuous.
 
     //! \brief trim the buffer into a shape have no overflow on both side, have no overlap with exist buffer.
-    bool trim(BufferList &buffer, uint64_t &start); 
+    void trim(uint64_t &start, uint64_t &end); 
 
     //! \brief merge existing continouos buffer
     void merge();
@@ -59,12 +60,6 @@ class StreamReassembler {
     //! \note If the byte at a particular index has been pushed more than once, it
     //! should only be counted once for the purpose of this function.
     size_t unassembled_bytes() const {return this->_unassembled;}
-
-    //! \brief The number of reassembled bytes in the ByteStream but not read yet.
-    size_t unread_bytes() const { return this->_output.buffer_size(); }
-
-    //! \brief The number of reassembled bytes in the ByteStream in total.
-    size_t written_bytes() const { return this->_output.bytes_written(); }
 
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled

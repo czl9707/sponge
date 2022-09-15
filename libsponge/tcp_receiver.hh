@@ -7,6 +7,7 @@
 #include "tcp_header.hh"
 #include "wrapping_integers.hh"
 
+#include <iostream>
 #include <optional>
 
 //! \brief The "receiver" part of a TCP implementation.
@@ -30,7 +31,7 @@ class TCPReceiver {
     TCPReceiver(const size_t capacity) : 
       _reassembler(capacity),
       _capacity(capacity),
-      _ISN(nullopt){};
+      _ISN(std::nullopt){};
 
     //! \name Accessors to provide feedback to the remote TCPSender
     //!@{
@@ -52,7 +53,7 @@ class TCPReceiver {
     //! the first byte that falls after the window (and will not be
     //! accepted by the receiver) and (b) the sequence number of the
     //! beginning of the window (the ackno).
-    size_t window_size() const {return this->_capacity - this->_reassembler.unread_bytes(); }
+    size_t window_size() const {return this->_capacity - this->_reassembler.stream_out().buffer_size(); }
     //!@}
 
     //! \brief number of bytes stored but not yet reassembled
@@ -68,7 +69,7 @@ class TCPReceiver {
     //!@}
 
     private:
-    size_t written_bytes() const { return this->_reassembler.written_bytes(); }
+    size_t written_bytes() const { return this->_reassembler.stream_out().bytes_written(); }
 
 };
 

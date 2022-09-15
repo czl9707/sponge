@@ -28,33 +28,24 @@ size_t TCPSender::bytes_in_flight() const {
 }
 
 void TCPSender::fill_window() {
-    int64_t windowSize = max<int64_t>(this->_first_notaccept - this->_first_unackno, 0);
-    int64_t sendable = windowSize - max<int64_t>(0, (this->_next_seqno - this->_first_unackno));
-
     // if the sender is not started, send the syn.
     if (this->_next_seqno == 0){
         this->_send_syn();
         return;
     }
 
-    while (this->_stream.buffer_size() > 0 && sendable > 0){
+    uint64_t last_can_sent = this->_first_notaccept + (this->_first_notaccept == this->_first_unackno ? 1 : 0);
+
+    while (this->_next_seqno < last_can_sent){
         int64_t size = min<uint64_t>(this->_stream.buffer_size(), this->_pkg_size);
-        size = min<uint64_t>(size, sendable);
+        size = min<uint64_t>(size, last_can_sent - this->_next_seqno);
 
         this->send_package(
             this->_stream.read(size),
             this->_next_seqno
         );
 
-        sendable -= size;
-    }
-
-    this->send_package("", this->_next_seqno);
-
-    if (this->_first_notaccept == this->_first_unackno && this->_next_seqno == this->_first_notaccept){
-        if (this->_stream.buffer_size() > 0){
-            this->send_package(this->_stream.read(1), this->_next_seqno);
-        }
+        if (this->_stream.buffer_size() == 0) break;
     }
 }
 
@@ -111,26 +102,24 @@ void TCPSender::send_package(string &&payload, uint64_t &start){
     seg.payload() = Buffer(move(payload));
     seg.header().seqno = wrap(start, this->_isn);
     uint64_t last = start + seg.payload().size();
-    
-    if (this->_stream.input_ended() && !this->_finsent){
-        if (this->_stream.buffer_empty()){
-            if (last < this->_first_notaccept || 
-            (this->_first_unackno == this->_first_notaccept && seg.payload().size() == 0)){
-                seg.header().fin = true;
-                last ++;
-                this->_finsent = true;
-            }
+
+    if (this->_stream.eof() && !this->_finsent){
+        if (last < this->_first_notaccept || 
+        (this->_first_unackno == this->_first_notaccept && seg.payload().size() == 0)){
+            seg.header().fin = true;
+            last ++;
+            this->_finsent = true;
         }
     }
     
+    if (seg.length_in_sequence_space() == 0) return;
+
     if (last > this->_next_seqno){
         this->_next_seqno = last;
     }
 
-    if (seg.header().syn || seg.header().fin || seg.payload().size() > 0){
-        this->_segments_out.push(seg);
-        this->_timer.push(seg);
-    }
+    this->_segments_out.push(seg);
+    this->_timer.push(seg);
 }
 
 RetransTimer::RetransTimer(const unsigned int retx_timeout):

@@ -55,17 +55,17 @@ class TCPSender {
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
 
-    //! the (absolute) sequence number for the first byte cannot be sent
-    uint64_t _first_notaccept{0xffffffffffffffff};
-
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
 
-    //! fin number
-    bool _finsent{false};
+    //! the (absolute) sequence number for the first byte cannot be sent
+    uint64_t _first_notaccept{1};
 
     //! the (absolute) sequence number for the first byte has not been sent
     uint64_t _first_unackno{0};
+
+    //! fin number
+    bool _finsent{false};
 
     //! size of one package
     const uint64_t _pkg_size{TCPConfig::MAX_PAYLOAD_SIZE};

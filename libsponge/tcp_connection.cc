@@ -25,11 +25,6 @@ size_t TCPConnection::time_since_last_segment_received() const {
 }
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
-    // cerr << "RECEIVE "; 
-    // cerr << seg.payload().size() << " WIN " << seg.header().win << " ";
-    // if (seg.header().ack) cerr << seg.header().ackno.raw_value();
-    // cerr << endl;
-
     bool need_send_ack = seg.length_in_sequence_space();
     this->_time_since_last_segment_received = 0;
     this->_receiver.segment_received(seg); 
@@ -77,10 +72,6 @@ bool TCPConnection::active() const {
 }
 
 size_t TCPConnection::write(const string &data) {
-    // cerr << "WRITE " << data.size();
-    // cerr << " REST " << this->_sender.stream_in().remaining_capacity() << endl;
-    // cerr << endl;
-
     auto result = this->_sender.stream_in().write(data);
     this->_flush_segs();
     return result; 
@@ -129,8 +120,6 @@ void TCPConnection::_send_reset() {
 }
 
 void TCPConnection::_flush_segs() {
-    // cerr << "FLUSH ";
-
     auto state = this->state();
     if (state == TCPState::State::LISTEN || 
     state == TCPState::State::CLOSED || 
@@ -144,8 +133,6 @@ void TCPConnection::_flush_segs() {
 
         this->_enrich_seg(seg);
         this->_segments_out.push(seg);
-
-        // cerr << seg.payload().size() << " " << seg.header().fin << seg.header().syn << seg.header().ack << endl ;
     }
 }
 
