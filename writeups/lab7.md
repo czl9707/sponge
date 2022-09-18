@@ -1,15 +1,29 @@
-Lab 0 Writeup
+Lab 7 Writeup
 =============
 
 My name: [your name here]
 
-My SUNet ID: sunetid
+My SUNet ID: [your sunetid here]
 
-I collaborated with: [list sunetids here]
+My lab partner's SUNet ID: [your sunetid here]
+
+I also worked with or collaborated with: [their sunetids here]
+
+I would like to thank/reward these classmates for their help: [list sunetids here]
 
 This lab took me about [n] hours to do. I [did/did not] attend the lab session.
 
-My secret code from section 2.1 was: 163257
+Solo portion:
+[]
+
+Group portion:
+[]
+
+Creative portion (optional):
+[]
+
+Other remarks:
+[]
 
 - Optional: I had unexpected difficulty with: [describe]
 

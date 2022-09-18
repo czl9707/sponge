@@ -2,6 +2,7 @@
 #define SPONGE_LIBSPONGE_BYTE_STREAM_HH
 
 #include <string>
+#include "buffer.hh"
 
 //! \brief An in-order byte stream.
 
@@ -16,8 +17,13 @@ class ByteStream {
     // all, but if any of your tests are taking longer than a second,
     // that's a sign that you probably want to keep exploring
     // different approaches.
-
+    const size_t _capacity;
+    size_t _written, _popped;
+    BufferList _buffer;
     bool _error{};  //!< Flag indicating that the stream suffered an error.
+    bool _input_ended{};
+
+    void concatenate();
 
   public:
     //! Construct a stream with room for `capacity` bytes.
